@@ -1,0 +1,233 @@
+{%extends "base.html" %}
+
+{% load staticfiles %}
+
+{%block dashboard%}
+	
+<div class="container">
+   <nav class="navbar navbar-dark text-white bg-dark justify-content-between" style="margin-top:3%;border-radius:15px;">
+      <a class="navbar-brand"">Hi,&nbsp;&nbsp;{{username}}</a>
+      <div>
+         <div class="input-group">
+            <div class="input-group-prepend">
+               <span class="input-group-text">@</span>
+            </div>
+            <input id="searchuser" type="text" class="form-control text-center" placeholder="Share With Username" aria-label="Username">
+            <input type="hidden" name="share_id" id='share_id'>
+         </div>
+      </div>
+      <button type="button" class="btn btn-success" data-toggle="modal" onclick="create_button('create');" data-target="#createnotemodal">Create Note</button>
+      <button class="btn btn-primary my-2" style="margin-left:20px;" id="logout" >Logout</button>
+   </nav>
+   <br><br>
+   <div class="row" align="center">
+      <div class="col-xs-12 col-md-12" >
+         <h3>My Notes</h3>
+         <br>
+         <div id="mynotes"></div>
+      </div>
+   </div>
+</div>
+<!-- Note Create Modal -->
+<div class="modal fade" id="createnotemodal" tabindex="-1" role="dialog" >
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id='modal-title'>Create Note</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <div class="card m-3" style="max-width:30rem;rem;background-color:#F0E68C;">
+               <div class="card-header" id='card-header'>New Note</div>
+               <div class="card-body" style="background-color:#eadd61;" >
+                  <input class="card-title" type="text" id="note_title" placeholder="Enter Note Title" />
+                  <textarea style="height:200px;" class="card-text form-control" id="note_body" placeholder="Enter Note Content"></textarea>
+                  <br>
+                  <input type="hidden" id="note_id" />
+                  <div align="right">
+                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                     <span id="modal-button" ></span>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+<script type="text/javascript">
+   function create_button(type){
+   
+     if(type=='create'){
+     $('#modal-title').text('Create Note');
+     $('#card-header').text('New Note');
+     $("#note_title").val('');
+     $("#note_body").val('');
+       btn="<button type='button' onclick=create_note(jQuery('#note_title').val(),jQuery('#note_body').val()); class='btn btn-success btn-sm'>Create Note</button>";
+       $("#modal-button").html(btn);
+   
+   
+     }
+     else if (type=='update'){
+       $('#modal-title').text('Modify Note');
+       $('#card-header').text('Update Note');
+       $("#note_title").val('');
+       $("#note_body").val('');
+      btn="<button type='button' onclick=update_note(jQuery('#note_id').val(),jQuery('#note_title').val(),jQuery('#note_body').val()); class='btn btn-success btn-sm'>Update Note</button>";
+      $("#modal-button").html(btn);
+     }
+   
+   }
+   
+   function note_generator(id,title,body,shared_with,created=false,updated=false,update_id=false){
+     
+         data='<div id='+id+' class="card m-3"\ style="width:20rem;rem;background-color:#F0E68C;display:inline-block;">\
+         <div align="right" ><button type="button" onclick=trigger('+id+',"share",method="POST"); style="display:inline-block" class="btn btn-success btn-sm">Share This Note</button></div>\
+          <input type="hidden" value='+shared_with+' id="shared_with_'+id+'" /><br>\
+         <div class="card-header"><h4><strong id=title_'+id+' >'+title+'</strong></h4></div>\
+         <div class="card-body" style="background-color:#eadd61;" >\
+         <p class="card-text" id=body_'+id+' >'+body+'</p><br><br>\
+         <div>\
+         <button type="button" onclick=trigger('+id+',"update");create_button("update"); style="display:inline-block" class="btn btn-primary btn-sm">Update Note</button>\
+         <button type="button" onclick=trigger('+id+',"delete"); style="display:inline-block" class="btn btn-danger btn-sm">Delete Note</button></div>\
+       </div>';
+       if(created==true){
+         $("#mynotes").prepend(data);
+       }
+       else if (updated==true){
+        $("#"+id).remove();
+        $("#mynotes").prepend(data); 
+       }
+       else{
+        $("#mynotes").append(data);
+       }
+       
+   
+   }
+   
+   $.ajax({           
+         type:"GET",
+         url:"notes",
+         success:function(data){console.log(data);
+         if(data.status=='success'){
+             for (i = 0; i < data.data.length;++i) {
+                 note_generator(data.data[i].pk, data.data[i].fields.note_title, data.data[i].fields.note_body, data.data[i].fields.shared_with);
+               }          
+            
+            }
+         },
+         error:function(err){console.log(err);alertify.error("Code : "+err.status+" | Message : "+err.statusText+" | Detail Message : "+err.responseJSON.message);}
+     
+     });
+   
+   
+   function trigger_ajax_call(id,action,method,url,data){
+     $.ajax({           
+         type:method,
+         url:'notes'+url,
+         data:data,
+         success:function(data){console.log(data);
+         if(action=='delete'){ 
+           $("#"+id).remove();
+         }
+         else if(action=='update'){
+             $("#note_id").val(id);
+             $("#note_title").val($("#title_"+id).text());
+             $("#note_body").val($("#body_"+id).text());
+             $('#createnotemodal').modal('toggle');
+         }
+         else if(action=='share'){
+             $("#searchuser").val('')
+             $("#share_id").val('');
+         }
+         alertify.success("Action Performed Successfully!");
+   
+     },
+      error:function(err){console.log(err);
+         alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
+       }
+       });
+   }
+   
+   
+   function trigger(id,action,method="GET"){
+   
+     if(method=="GET"){url="?note_id="+id+"&action="+action;data='';}
+     
+     else if(method=="POST"){
+       
+       if(action=='share'){
+         if($("#searchuser").val()=='' || $("#searchuser").val().includes("Username") ) {
+             alertify.error('Please Type The Username To Share Your Note With !');
+             return false;
+           }
+       }
+       
+       url=" ";temp=JSON.parse($("#share_id").val());data={'note_id':id,'share_id':temp.id,'action':'share'};console.log($("#share_id").val());
+     }
+   
+     // confirm prompt action
+     message='Are You Sure You Want To "'+action.toUpperCase()+'" The Record ?';
+     alertify.confirm(message, function () {
+             trigger_ajax_call(id,action,method,url,data);
+     }, function() {
+             alertify.error("You've Clicked Cancel !");
+     });
+   
+   }
+   
+   function create_note(title,body,page="notes"){
+       $.ajax({           
+         type:"POST",
+         url:page,
+         data:{"action":"create","note_title":title,"note_body":body},
+         success:function(data){
+         if(data.status=='success'){
+           console.log(data);
+           $('#createnotemodal').modal('toggle');
+           $("#note_title").val('');
+           $("#note_body").val('');
+           note_generator(data.data[0].pk,data.data[0].fields.note_title,data.data[0].fields.note_body,data.data[0].fields.shared_with,created=true);
+           alertify.success("Note Created Successfully!");
+   
+         }
+         },
+         error:function(err){console.log(err);
+          if(err.responseJSON.message.includes("Duplicate")==true){
+               alertify.error("Code : "+err.status+" | Message : Note Already Created!");  
+           }
+           else{
+             alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
+           }
+         }
+     
+     });
+     }
+   
+     function update_note(id,title,body,page="notes"){
+       $.ajax({           
+         type:"POST",
+         url:page,
+         data:{"action":"update","id":id,"note_title":title,"note_body":body},
+         success:function(data){
+         if(data.status=='success'){
+           console.log(data);
+           $('#createnotemodal').modal('toggle');
+           $("#note_id").val('');
+           $("#note_title").val('');
+           $("#note_body").val('');
+           note_generator(data.data[0].pk,data.data[0].fields.note_title,data.data[0].fields.note_body,data.data[0].fields.shared_with,created=false,updated=true,update_id=data.data[0].pk);
+           alertify.success("Note Updated Successfully!");
+   
+         }
+         },
+         error:function(err){console.log(err);alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);}
+     
+     });
+     }
+   
+   
+</script>
+
+{%endblock%}
