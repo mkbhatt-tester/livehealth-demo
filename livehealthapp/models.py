@@ -13,7 +13,7 @@ class User(models.Model):
 
 class Note(models.Model):
 	note = models.ForeignKey(User)
-	note_title = models.CharField(max_length=20,unique=True)
+	note_title = models.CharField(max_length=50,unique=True)
 	note_body = models.TextField()
 	created_at = models.DateTimeField(auto_now_add=True)
 	shared_with = models.TextField()

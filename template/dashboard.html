@@ -87,7 +87,7 @@
           <input type="hidden" value='+shared_with+' id="shared_with_'+id+'" /><br>\
          <div class="card-header"><h4><strong id=title_'+id+' >'+title+'</strong></h4></div>\
          <div class="card-body" style="background-color:#eadd61;" >\
-         <p class="card-text" id=body_'+id+' >'+body+'</p><br><br>\
+         <pre><p class="card-text" id=body_'+id+' >'+body+'</p></pre><br><br>\
          <div>\
          <button type="button" onclick=trigger('+id+',"update");create_button("update"); style="display:inline-block" class="btn btn-primary btn-sm">Update Note</button>\
          <button type="button" onclick=trigger('+id+',"delete"); style="display:inline-block" class="btn btn-danger btn-sm">Delete Note</button></div>\
@@ -144,8 +144,7 @@
          alertify.success("Action Performed Successfully!");
    
      },
-      error:function(err){console.log(err);
-         alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
+      error:function(err){console.log(err);alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
        }
        });
    }
@@ -197,6 +196,9 @@
           if(err.responseJSON.message.includes("Duplicate")==true){
                alertify.error("Code : "+err.status+" | Message : Note Already Created!");  
            }
+           else if(err.responseJSON.message.includes("too long for column 'note_title'")==true){
+               alertify.error("Code : "+err.status+" | Message : Note Title Length Must Be Maximun 50 Characters!");  
+           }
            else{
              alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
            }
@@ -222,7 +224,17 @@
    
          }
          },
-         error:function(err){console.log(err);alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);}
+         error:function(err){console.log(err);
+          if(err.responseJSON.message.includes("Duplicate")==true){
+               alertify.error("Code : "+err.status+" | Message : Note Already Created!");  
+           }
+           else if(err.responseJSON.message.includes("too long for column 'note_title'")==true){
+               alertify.error("Code : "+err.status+" | Message : Note Title Length Must Be Maximun 50 Characters!");  
+           }
+           else{
+             alertify.error("Code : "+err.status+" | Message : "+err.responseJSON.message);
+           }
+         }
      
      });
      }
