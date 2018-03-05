@@ -71,7 +71,7 @@ def notes(request,fmt=fmt):
 		# Validate Input
 		if not (re.match(r'^[\w ]+$', str(request.POST.get('note_title')) ) or re.match(r'^[\w]+$', str(request.POST.get('note_body')) ) ):
 			raise Exception('Validation Failure : Only Alphanumeric Characters Allowed!')
-		elif request.POST.get('action')=='create':
+		elif request.POST.get('action')=='create' or request.POST.get('action')=='update':
 			if len(request.POST.get('note_title'))<6 or len(request.POST.get('note_body'))<6:
 				raise Exception('Validation Failure : Note Title/Note Content Fields Minimum Length Must be Of 6 Characters!')
 
